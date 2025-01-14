@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { jsPDF } from "jspdf";
 import * as XLSX from "xlsx";
 
 const ShuffleCollegeData = () => {
@@ -22,42 +21,27 @@ const ShuffleCollegeData = () => {
       .split("\n") // Split by new lines
       .map((line) => line.trim()) // Trim whitespace from each line
       .filter((line) => line); // Remove empty lines
-    setShuffledData(shuffleArray(parsedData)); // Shuffle and set data
-  };
 
-  // Handle Download as PDF
-  const handleDownloadPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(12);
-    doc.text("Shuffled College Data", 10, 10);
-
-    shuffledData.forEach((line, index) => {
-      const [id, name, branch] = line.split(/\s+/); // Split line into columns (ID, Name, Branch)
-      
-      // Adjust x-coordinates for each column
-      const idX = 10; // Start position for ID
-      const nameX = 60; // Start position for Name
-      const branchX = 120; // Start position for Branch
-      const y = 20 + index * 10; // Adjust y-coordinate for each row
-
-      doc.text(`${index + 1}.`, 5, y); // Serial number
-      doc.text(id || "", idX, y); // ID column
-      doc.text(name || "", nameX, y); // Name column
-      doc.text(branch || "", branchX, y); // Branch column
+    // Process and split data into parts (Name, ID, Branch)
+    const processedData = parsedData.map((line) => {
+      const parts = line.split(/\s+/); // Split by whitespace (spaces or tabs)
+      const name = parts.slice(0, parts.length - 2).join(" "); // Join all parts except last two as Name
+      const id = parts[parts.length - 2]; // Second last part as ID
+      const branch = parts[parts.length - 1]; // Last part as Branch
+      return { name, id, branch };
     });
 
-    doc.save("Shuffled_College_Data.pdf");
+    setShuffledData(shuffleArray(processedData)); // Shuffle and set data
   };
 
   // Handle Download as Excel
   const handleDownloadExcel = () => {
-    const data = shuffledData.map((line, index) => {
-      const [id, name, branch] = line.split(/\s+/);
-      return [index + 1, id, name, branch]; // Return data in a row format
+    const data = shuffledData.map((student, index) => {
+      return [index + 1, student.name.split(" ")[0], student.name.split(" ")[1] || "", student.id, student.branch];
     });
 
     // Create worksheet from data
-    const ws = XLSX.utils.aoa_to_sheet([["Serial No", "ID", "Name", "Branch"], ...data]);
+    const ws = XLSX.utils.aoa_to_sheet([["Serial No", "First Name", "Last Name", "ID", "Branch"], ...data]);
 
     // Create workbook from worksheet
     const wb = XLSX.utils.book_new();
@@ -71,13 +55,13 @@ const ShuffleCollegeData = () => {
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
       <h3>Shuffle College Data</h3>
       <textarea
-        placeholder="Enter data in 'Id Name Branch' format, one per line"
+        placeholder="Enter data in 'Name ID Branch' format, one per line"
         value={inputData}
         onChange={(e) => setInputData(e.target.value)}
-        rows="5"
+        rows="10"
         style={{
           width: "300px",
-          height: "100px",
+          height: "200px",
           padding: "10px",
           marginBottom: "10px",
           borderRadius: "5px",
@@ -102,20 +86,6 @@ const ShuffleCollegeData = () => {
       </button>
       {shuffledData.length > 0 && (
         <>
-          <button
-            onClick={handleDownloadPDF}
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#28a745",
-              color: "#fff",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer",
-              marginRight: "10px",
-            }}
-          >
-            Download PDF
-          </button>
           <button
             onClick={handleDownloadExcel}
             style={{
@@ -144,9 +114,9 @@ const ShuffleCollegeData = () => {
               width: "300px",
             }}
           >
-            {shuffledData.map((line, index) => (
+            {shuffledData.map((student, index) => (
               <div key={index} style={{ marginBottom: "5px" }}>
-                {index + 1}. {line}
+                {index + 1}. {student.name} - {student.id} - {student.branch}
               </div>
             ))}
           </div>
