@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 
-const ShuffleCollegeIDs = () => {
-  const [inputIds, setInputIds] = useState("");
-  const [collegeIds, setCollegeIds] = useState([]);
+const ShuffleCollegeData = () => {
+  const [inputData, setInputData] = useState("");
+  const [shuffledData, setShuffledData] = useState([]);
 
   // Function to shuffle the array
   const shuffleArray = (array) => {
@@ -16,20 +16,20 @@ const ShuffleCollegeIDs = () => {
 
   // Handle Generate Button Click
   const handleGenerate = () => {
-    const idsArray = inputIds
+    const parsedData = inputData
       .split("\n") // Split by new lines
-      .map((id) => id.trim()) // Trim whitespace
-      .filter((id) => id); // Remove empty lines
-    setCollegeIds(shuffleArray(idsArray)); // Shuffle and set IDs
+      .map((line) => line.trim()) // Trim whitespace from each line
+      .filter((line) => line); // Remove empty lines
+    setShuffledData(shuffleArray(parsedData)); // Shuffle and set data
   };
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
-      <h3>Shuffle College IDs</h3>
+      <h3>Shuffle College Data</h3>
       <textarea
-        placeholder="Enter one ID per line"
-        value={inputIds}
-        onChange={(e) => setInputIds(e.target.value)}
+        placeholder="Enter data in 'Id Name Branch' format, one per line"
+        value={inputData}
+        onChange={(e) => setInputData(e.target.value)}
         rows="5"
         style={{
           width: "300px",
@@ -56,44 +56,28 @@ const ShuffleCollegeIDs = () => {
         Generate
       </button>
 
-      {collegeIds.length > 0 && (
+      {shuffledData.length > 0 && (
         <div style={{ marginTop: "20px" }}>
-          <h4>Shuffled IDs:</h4>
-          <table
+          <h4>Shuffled Data:</h4>
+          <div
             style={{
-              borderCollapse: "collapse",
-              width: "50%",
-              textAlign: "left",
-              marginTop: "10px",
+              backgroundColor: "#f9f9f9",
+              padding: "10px",
+              borderRadius: "5px",
+              border: "1px solid #ccc",
+              width: "300px",
             }}
           >
-            <thead>
-              <tr>
-                <th style={{ border: "1px solid #ddd", padding: "8px" }}>
-                  S.No
-                </th>
-                <th style={{ border: "1px solid #ddd", padding: "8px" }}>
-                  College ID
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {collegeIds.map((id, index) => (
-                <tr key={index}>
-                  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                    {index + 1}
-                  </td>
-                  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                    {id}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            {shuffledData.map((line, index) => (
+              <div key={index} style={{ marginBottom: "5px" }}>
+                {line}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
   );
 };
 
-export default ShuffleCollegeIDs;
+export default ShuffleCollegeData;
