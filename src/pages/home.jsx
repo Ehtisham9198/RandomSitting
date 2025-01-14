@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { jsPDF } from "jspdf";
 
 const ShuffleCollegeData = () => {
   const [inputData, setInputData] = useState("");
@@ -21,6 +22,19 @@ const ShuffleCollegeData = () => {
       .map((line) => line.trim()) // Trim whitespace from each line
       .filter((line) => line); // Remove empty lines
     setShuffledData(shuffleArray(parsedData)); // Shuffle and set data
+  };
+
+  // Handle Download as PDF
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(12);
+    doc.text("Shuffled College Data", 10, 10);
+
+    shuffledData.forEach((line, index) => {
+      doc.text(`${index + 1}. ${line}`, 10, 20 + index * 10); // Add each line to the PDF
+    });
+
+    doc.save("Shuffled_College_Data.pdf"); // Save the file
   };
 
   return (
@@ -51,10 +65,26 @@ const ShuffleCollegeData = () => {
           border: "none",
           borderRadius: "5px",
           cursor: "pointer",
+          marginRight: "10px",
         }}
       >
         Generate
       </button>
+      {shuffledData.length > 0 && (
+        <button
+          onClick={handleDownloadPDF}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#28a745",
+            color: "#fff",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          Download PDF
+        </button>
+      )}
 
       {shuffledData.length > 0 && (
         <div style={{ marginTop: "20px" }}>
@@ -70,7 +100,7 @@ const ShuffleCollegeData = () => {
           >
             {shuffledData.map((line, index) => (
               <div key={index} style={{ marginBottom: "5px" }}>
-                {line}
+                {index + 1}. {line}
               </div>
             ))}
           </div>
