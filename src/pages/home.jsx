@@ -2,89 +2,71 @@ import React, { useState } from "react";
 import * as XLSX from "xlsx";
 
 const ShuffleCollegeData = () => {
-  const [inputData, setInputData] = useState("");
   const [shuffledData, setShuffledData] = useState([]);
 
-  // Function to shuffle the array
+  // Function to shuffle rows
   const shuffleArray = (array) => {
-    const shuffled = [...array]; // Create a copy of the array
+    const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1)); // Random index
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; // Swap
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     return shuffled;
   };
 
-  // Handle Generate Button Click
-  const handleGenerate = () => {
-    const parsedData = inputData
-      .split("\n") // Split by new lines
-      .map((line) => line.trim()) // Trim whitespace from each line
-      .filter((line) => line); // Remove empty lines
+  // Handle file upload
+  const handleFileUpload = (e) => {
+    const uploadedFile = e.target.files[0];
+    if (uploadedFile && uploadedFile.name.endsWith(".xlsx")) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const data = reader.result;
+        const workbook = XLSX.read(data, { type: "binary" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // Read as 2D array
 
-    // Process and split data into parts (Name, ID, Branch)
-    const processedData = parsedData.map((line) => {
-      const parts = line.split(/\s+/); // Split by whitespace (spaces or tabs)
-      const name = parts.slice(0, parts.length - 2).join(" "); // Join all parts except last two as Name
-      const id = parts[parts.length - 2]; // Second last part as ID
-      const branch = parts[parts.length - 1]; // Last part as Branch
-      return { name, id, branch };
-    });
+        // Exclude the header and shuffle the rows
+        const [header, ...rows] = jsonData;
+        const shuffledRows = shuffleArray(rows);
 
-    setShuffledData(shuffleArray(processedData)); // Shuffle and set data
+        // Add Serial No to each row
+        const rowsWithSerialNo = shuffledRows.map((row, index) => [
+          index + 1, // Serial No
+          ...row,
+        ]);
+
+        // Combine the header with Serial No column
+        const updatedHeader = ["Serial No", ...header];
+        setShuffledData([updatedHeader, ...rowsWithSerialNo]);
+      };
+      reader.readAsBinaryString(uploadedFile);
+    } else {
+      alert("Please upload a valid Excel file.");
+    }
   };
 
   // Handle Download as Excel
   const handleDownloadExcel = () => {
-    const data = shuffledData.map((student, index) => {
-      return [index + 1, student.name.split(" ")[0], student.name.split(" ")[1] || "", student.id, student.branch];
-    });
+    if (shuffledData.length === 0) {
+      alert("No data to download.");
+      return;
+    }
 
-    // Create worksheet from data
-    const ws = XLSX.utils.aoa_to_sheet([["Serial No", "First Name", "Last Name", "ID", "Branch"], ...data]);
-
-    // Create workbook from worksheet
+    const ws = XLSX.utils.aoa_to_sheet(shuffledData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Shuffled Data");
-
-    // Download the Excel file
     XLSX.writeFile(wb, "Shuffled_College_Data.xlsx");
   };
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
       <h3>Shuffle College Data</h3>
-      <textarea
-        placeholder="Enter data in 'Name ID Branch' format, one per line"
-        value={inputData}
-        onChange={(e) => setInputData(e.target.value)}
-        rows="10"
-        style={{
-          width: "300px",
-          height: "200px",
-          padding: "10px",
-          marginBottom: "10px",
-          borderRadius: "5px",
-          border: "1px solid #ccc",
-          resize: "none",
-        }}
-      />
+
+      {/* File upload input */}
+      <input type="file" onChange={handleFileUpload} accept=".xlsx" />
+
       <br />
-      <button
-        onClick={handleGenerate}
-        style={{
-          padding: "10px 20px",
-          backgroundColor: "#007BFF",
-          color: "#fff",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer",
-          marginRight: "10px",
-        }}
-      >
-        Generate
-      </button>
-      {shuffledData.length > 0 && (
+      {shuffledData.length > 1 && (
         <>
           <button
             onClick={handleDownloadExcel}
@@ -95,31 +77,58 @@ const ShuffleCollegeData = () => {
               border: "none",
               borderRadius: "5px",
               cursor: "pointer",
+              marginTop: "10px",
             }}
           >
-            Download Excel
+            Download Shuffled Excel
           </button>
         </>
       )}
 
-      {shuffledData.length > 0 && (
+      {shuffledData.length > 1 && (
         <div style={{ marginTop: "20px" }}>
-          <h4>Shuffled Data:</h4>
-          <div
+          <h4>Shuffled Data Preview:</h4>
+          <table
             style={{
-              backgroundColor: "#f9f9f9",
-              padding: "10px",
-              borderRadius: "5px",
-              border: "1px solid #ccc",
-              width: "300px",
+              borderCollapse: "collapse",
+              width: "100%",
+              marginTop: "10px",
             }}
           >
-            {shuffledData.map((student, index) => (
-              <div key={index} style={{ marginBottom: "5px" }}>
-                {index + 1}. {student.name} - {student.id} - {student.branch}
-              </div>
-            ))}
-          </div>
+            <thead>
+              <tr>
+                {shuffledData[0].map((header, index) => (
+                  <th
+                    key={index}
+                    style={{
+                      border: "1px solid #ccc",
+                      padding: "8px",
+                      backgroundColor: "#f2f2f2",
+                    }}
+                  >
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {shuffledData.slice(1).map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  {row.map((cell, cellIndex) => (
+                    <td
+                      key={cellIndex}
+                      style={{
+                        border: "1px solid #ccc",
+                        padding: "8px",
+                      }}
+                    >
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
