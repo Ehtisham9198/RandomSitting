@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { jsPDF } from "jspdf";
+import * as XLSX from "xlsx";
 
 const ShuffleCollegeData = () => {
   const [inputData, setInputData] = useState("");
@@ -31,10 +32,39 @@ const ShuffleCollegeData = () => {
     doc.text("Shuffled College Data", 10, 10);
 
     shuffledData.forEach((line, index) => {
-      doc.text(`${index + 1}. ${line}`, 10, 20 + index * 10); // Add each line to the PDF
+      const [id, name, branch] = line.split(/\s+/); // Split line into columns (ID, Name, Branch)
+      
+      // Adjust x-coordinates for each column
+      const idX = 10; // Start position for ID
+      const nameX = 60; // Start position for Name
+      const branchX = 120; // Start position for Branch
+      const y = 20 + index * 10; // Adjust y-coordinate for each row
+
+      doc.text(`${index + 1}.`, 5, y); // Serial number
+      doc.text(id || "", idX, y); // ID column
+      doc.text(name || "", nameX, y); // Name column
+      doc.text(branch || "", branchX, y); // Branch column
     });
 
-    doc.save("Shuffled_College_Data.pdf"); // Save the file
+    doc.save("Shuffled_College_Data.pdf");
+  };
+
+  // Handle Download as Excel
+  const handleDownloadExcel = () => {
+    const data = shuffledData.map((line, index) => {
+      const [id, name, branch] = line.split(/\s+/);
+      return [index + 1, id, name, branch]; // Return data in a row format
+    });
+
+    // Create worksheet from data
+    const ws = XLSX.utils.aoa_to_sheet([["Serial No", "ID", "Name", "Branch"], ...data]);
+
+    // Create workbook from worksheet
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Shuffled Data");
+
+    // Download the Excel file
+    XLSX.writeFile(wb, "Shuffled_College_Data.xlsx");
   };
 
   return (
@@ -71,19 +101,35 @@ const ShuffleCollegeData = () => {
         Generate
       </button>
       {shuffledData.length > 0 && (
-        <button
-          onClick={handleDownloadPDF}
-          style={{
-            padding: "10px 20px",
-            backgroundColor: "#28a745",
-            color: "#fff",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          Download PDF
-        </button>
+        <>
+          <button
+            onClick={handleDownloadPDF}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#28a745",
+              color: "#fff",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+              marginRight: "10px",
+            }}
+          >
+            Download PDF
+          </button>
+          <button
+            onClick={handleDownloadExcel}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#17a2b8",
+              color: "#fff",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+            }}
+          >
+            Download Excel
+          </button>
+        </>
       )}
 
       {shuffledData.length > 0 && (
